@@ -58,7 +58,7 @@ const HabitDashboard = () => {
       hardcoreMode: true,
       proofType: 'screenshot',
       streak: 2,
-      nextDeadline: '2024-01-17T23:59:00',
+      nextDeadline: '2024-01-20T23:59:00',
       status: 'safe',
       totalStaked: 150.00,
       lastProofSubmitted: '2024-01-10T22:30:00'
