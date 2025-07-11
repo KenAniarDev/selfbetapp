@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Outlet, useLocation, Link } from 'react-router-dom';
+import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { Target, Trophy, Upload, Settings } from 'lucide-react';
 
 const Layout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { path: '/', icon: Target, label: 'Create Goal', emoji: '🎯' },
@@ -15,7 +16,7 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/20 bg-card/30 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-border/20 bg-card/30 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -25,7 +26,10 @@ const Layout = () => {
               <h1 className="text-xl font-bold">Self-Bet</h1>
               <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">LOCKED IN</span>
             </div>
-            <button className="p-2 hover:bg-muted/50 rounded-lg transition-colors">
+            <button 
+              onClick={() => navigate('/settings')}
+              className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
+            >
               <Settings className="w-5 h-5" />
             </button>
           </div>
