@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, Save, User, Mail, Lock, Bell, Moon, Shield } from 'lucide-react';
+import { Camera, Save, User, Mail, Lock, Bell, Moon, Shield, CreditCard, Plus } from 'lucide-react';
 
 const SettingsPage = () => {
   const [firstName, setFirstName] = useState('John');
@@ -32,6 +32,11 @@ const SettingsPage = () => {
   const handleAvatarUpload = () => {
     // TODO: Implement avatar upload
     console.log('Uploading avatar');
+  };
+
+  const handleAddPaymentMethod = () => {
+    // Navigate to payment setup
+    window.location.href = '/payment';
   };
 
   return (
@@ -170,6 +175,48 @@ const SettingsPage = () => {
             >
               Change Password
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Payment Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              Payment Methods
+            </CardTitle>
+            <CardDescription>
+              Manage your payment methods for betting features
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-6 bg-gray-200 rounded flex items-center justify-center">
+                  <CreditCard className="w-4 h-4 text-gray-600" />
+                </div>
+                <div>
+                  <p className="font-medium">No payment method added</p>
+                  <p className="text-sm text-muted-foreground">
+                    Add a payment method to enable betting features
+                  </p>
+                </div>
+              </div>
+              <Button 
+                onClick={handleAddPaymentMethod}
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Payment
+              </Button>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              <p>• Secure payment processing with Stripe</p>
+              <p>• No payment data stored locally</p>
+              <p>• Easy to add and remove payment methods</p>
+            </div>
           </CardContent>
         </Card>
 

@@ -14,6 +14,7 @@ import ProofSubmission from "./components/ProofSubmission";
 import NotFound from "./pages/NotFound";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { OfflineIndicator } from "./components/OfflineIndicator";
+import PaymentSetupWrapper from "./components/PaymentSetupWrapper";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="dashboard" element={<HabitDashboard />} />
             <Route path="proof" element={<ProofSubmission />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="payment" element={<PaymentSetupWrapper />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
