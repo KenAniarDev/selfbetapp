@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '@/firebase/config';
 import { 
   signInWithEmailAndPassword, 
@@ -22,7 +22,11 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Get the intended destination from location state, or default to '/dashboard'
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -37,8 +41,8 @@ const LoginPage = () => {
         description: "Successfully signed in with Google.",
       });
       
-      // Navigate to dashboard or home page
-      navigate('/');
+      // Navigate to the intended destination or home page
+      navigate(from, { replace: true });
     } catch (error: any) {
       console.error('Google sign-in error:', error);
       setError(error.message || 'Failed to sign in with Google');
@@ -90,8 +94,8 @@ const LoginPage = () => {
         }
       }
 
-      // Navigate to dashboard or home page
-      navigate('/');
+      // Navigate to the intended destination or home page
+      navigate(from, { replace: true });
     } catch (error: any) {
       console.error('Authentication error:', error);
       let errorMessage = 'Authentication failed';
