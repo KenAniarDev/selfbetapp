@@ -105,9 +105,11 @@ const ProofSubmission = () => {
     setIsSubmitting(true);
     
     try {
-      // TODO: Implement actual proof submission API call
-      // For now, simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await apiService.submitProof(selectedGoal, uploadedFiles, description);
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
       
       toast({
         title: "Proof Submitted! ✅",
@@ -119,10 +121,14 @@ const ProofSubmission = () => {
       setSelectedGoal(null);
       setUploadedFiles([]);
       setDescription('');
+      
+      // Refresh goals to update status
+      await fetchGoals();
     } catch (error) {
+      console.error('Error submitting proof:', error);
       toast({
         title: "Error",
-        description: "Failed to submit proof. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to submit proof. Please try again.",
         variant: "destructive",
       });
     } finally {

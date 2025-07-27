@@ -93,6 +93,50 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  async submitProof(goalId: string, files: File[], description?: string): Promise<ApiResponse> {
+    try {
+      const token = await this.getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const formData = new FormData();
+      
+      // Add all files to FormData
+      files.forEach((file, index) => {
+        formData.append('ProofFile', file);
+      });
+
+      // Add description if provided
+      if (description) {
+        formData.append('description', description);
+      }
+
+      const url = `${API_BASE_URL}/goals/${goalId}/proof`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          // Don't set Content-Type for FormData, let browser set it with boundary
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return { data };
+    } catch (error) {
+      console.error('Proof submission failed:', error);
+      return { 
+        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      };
+    }
+  }
 }
 
 export const apiService = new ApiService();
