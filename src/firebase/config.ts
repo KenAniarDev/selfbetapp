@@ -4,13 +4,12 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDIZ_6mjNpAOC8HPaWNd_WtGkgucjebVmE",
-  authDomain: "self-bet-app-fc3f4.firebaseapp.com",
-  projectId: "self-bet-app-fc3f4",
-  storageBucket: "self-bet-app-fc3f4.firebasestorage.app",
-  messagingSenderId: "441431703149",
-  appId: "1:441431703149:web:120b142cdde82be6ca0964",
-  measurementId: "G-RFBGEJ2403"
+  apiKey: "AIzaSyBDwDCgOpBbaRWSUOHiTa4gn6ItU-T17tE",
+  authDomain: "self-bet-app.firebaseapp.com",
+  projectId: "self-bet-app",
+  storageBucket: "self-bet-app.firebasestorage.app",
+  messagingSenderId: "1011898671248",
+  appId: "1:1011898671248:web:55510676420f653b1f7815"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

@@ -14,19 +14,23 @@ import {
 import { getTimeUntilDeadline, getStatusColor } from '@/utils/habitUtils';
 
 interface Goal {
-  id: number;
+  id: string;
   name: string;
   targetAmount: number;
   interval: string;
   stakeAmount: number;
   deadlineTime: string;
-  hardcoreMode: boolean;
-  proofType: string;
-  streak: number;
-  nextDeadline: string;
+  nextDeadlineDateTime: string;
+  isActive: boolean;
+  currentStreak: number;
   status: string;
-  totalStaked: number;
-  lastProofSubmitted: string | null;
+  statusDescription: {
+    message: string;
+    timeDetail: string | null;
+  };
+  lastProofDate: string | null;
+  displayStakeAmount: string;
+  displayTarget: string;
 }
 
 interface GoalCardProps {
@@ -34,7 +38,7 @@ interface GoalCardProps {
 }
 
 const GoalCard = ({ goal }: GoalCardProps) => {
-  const timeLeft = getTimeUntilDeadline(goal.nextDeadline);
+  const timeLeft = getTimeUntilDeadline(goal.nextDeadlineDateTime);
   const isUrgent = timeLeft.includes('h') && !timeLeft.includes('d');
   const isOverdue = timeLeft === 'OVERDUE';
 
@@ -48,7 +52,6 @@ const GoalCard = ({ goal }: GoalCardProps) => {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             {goal.name}
-            {goal.hardcoreMode && <span className="text-sm">⚡</span>}
           </CardTitle>
           <Badge className={getStatusColor(goal.status)}>
             {goal.status.toUpperCase()}
@@ -64,7 +67,7 @@ const GoalCard = ({ goal }: GoalCardProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flame className="w-4 h-4 text-orange-500" />
-            <span className="font-semibold">{goal.streak} day streak</span>
+            <span className="font-semibold">{goal.currentStreak} day streak</span>
           </div>
           <div className="flex items-center gap-1 text-sm text-primary font-semibold">
             <DollarSign className="w-3 h-3" />
@@ -101,10 +104,10 @@ const GoalCard = ({ goal }: GoalCardProps) => {
             Submit Proof 📸
           </Button>
           
-          {goal.lastProofSubmitted && (
+          {goal.lastProofDate && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <CheckCircle className="w-3 h-3 text-green-500" />
-              Last proof: {new Date(goal.lastProofSubmitted).toLocaleDateString()}
+              Last proof: {new Date(goal.lastProofDate).toLocaleDateString()}
             </div>
           )}
         </div>

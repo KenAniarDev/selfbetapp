@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,47 +13,82 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
-  X
+  X,
+  Loader2,
+  DollarSign
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import apiService from '@/utils/api';
+import { Label } from '@/components/ui/label';
+
+interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  interval: string;
+  stakeAmount: number;
+  deadlineTime: string;
+  nextDeadlineDateTime: string;
+  isActive: boolean;
+  currentStreak: number;
+  status: string;
+  statusDescription: {
+    message: string;
+    timeDetail: string | null;
+  };
+  lastProofDate: string | null;
+  displayStakeAmount: string;
+  displayTarget: string;
+}
 
 const ProofSubmission = () => {
   const { toast } = useToast();
-  const [selectedGoal, setSelectedGoal] = useState<number | null>(null);
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock goals data
-  const goals = [
-    {
-      id: 1,
-      name: 'Meditate',
-      targetAmount: 20,
-      interval: 'day',
-      proofType: 'photo',
-      deadline: '2024-01-15T21:00:00',
-      stakeAmount: 25.00
-    },
-    {
-      id: 2,
-      name: 'Exercise',
-      targetAmount: 45,
-      interval: 'day',
-      proofType: 'photo',
-      deadline: '2024-01-15T18:00:00',
-      stakeAmount: 50.00
-    },
-    {
-      id: 3,
-      name: 'Read',
-      targetAmount: 30,
-      interval: 'week',
-      proofType: 'screenshot',
-      deadline: '2024-01-17T23:59:00',
-      stakeAmount: 75.00
+  useEffect(() => {
+    fetchGoals();
+  }, []);
+
+  const fetchGoals = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getGoals();
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // Handle the specific API response structure
+      let transformedGoals: Goal[] = [];
+      
+      if (response.data && response.data.data.data && Array.isArray(response.data.data.data)) {
+        // Goals are nested under response.data.data
+        transformedGoals = response.data.data.data;
+      } else if (Array.isArray(response.data.data)) {
+        // Fallback: if data is already an array
+        transformedGoals = response.data.data;
+      } else {
+        // Fallback to empty array
+        transformedGoals = [];
+      }
+
+      setGoals(transformedGoals);
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load goals. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -69,20 +104,30 @@ const ProofSubmission = () => {
 
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    toast({
-      title: "Proof Submitted! ✅",
-      description: "Your proof is being reviewed. Keep that streak alive!",
-      duration: 3000,
-    });
+    try {
+      // TODO: Implement actual proof submission API call
+      // For now, simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: "Proof Submitted! ✅",
+        description: "Your proof is being reviewed. Keep that streak alive!",
+        duration: 3000,
+      });
 
-    // Reset form
-    setSelectedGoal(null);
-    setUploadedFiles([]);
-    setDescription('');
-    setIsSubmitting(false);
+      // Reset form
+      setSelectedGoal(null);
+      setUploadedFiles([]);
+      setDescription('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit proof. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getProofTypeIcon = (type: string) => {
@@ -90,7 +135,7 @@ const ProofSubmission = () => {
       case 'photo': return <Camera className="w-4 h-4" />;
       case 'screenshot': return <Image className="w-4 h-4" />;
       case 'video': return <Video className="w-4 h-4" />;
-      case 'data': return <FileText className="w-4 h-4" />;
+      case 'text': return <FileText className="w-4 h-4" />;
       default: return <Upload className="w-4 h-4" />;
     }
   };
@@ -112,182 +157,184 @@ const ProofSubmission = () => {
     return { text: `${days}d ${hours % 24}h`, urgent: false };
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading your goals...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-          Submit Proof <span className="text-2xl">📸</span>
+          Submit Your Proof 📸
         </h1>
         <p className="text-muted-foreground">
-          Prove it or lose it. No excuses zone.
+          Prove you did it. Keep your money. Build your streak.
         </p>
       </div>
 
-      {/* Goal Selection */}
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Select Goal to Prove</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3">
-            {goals.map((goal) => {
-              const timeInfo = getTimeUntilDeadline(goal.deadline);
-              return (
-                <div
-                  key={goal.id}
-                  onClick={() => setSelectedGoal(goal.id)}
-                  className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                    selectedGoal === goal.id
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/50'
-                  } ${timeInfo.urgent ? 'pulse-red' : ''}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{goal.name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {goal.targetAmount} min / {goal.interval}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          {getProofTypeIcon(goal.proofType)}
-                          {goal.proofType}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          ${goal.stakeAmount}
-                        </div>
-                      </div>
-                    </div>
-                    <div className={`text-right ${timeInfo.urgent ? 'text-red-400' : 'text-muted-foreground'}`}>
-                      <div className="text-sm font-medium">{timeInfo.text}</div>
-                      <div className="text-xs">until deadline</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* File Upload */}
-      {selectedGoal && (
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Goal Selection */}
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5" />
+              <span className="text-2xl">🎯</span>
+              Select Your Goal
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {goals.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No active goals found.</p>
+                <p className="text-sm text-muted-foreground">
+                  Create a goal first to submit proof.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {goals.map((goal) => {
+                  const timeLeft = getTimeUntilDeadline(goal.nextDeadlineDateTime);
+                  const isUrgent = timeLeft.urgent;
+                  
+                  return (
+                    <div
+                      key={goal.id}
+                      className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                        selectedGoal === goal.id
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border hover:border-primary/30'
+                      } ${isUrgent ? 'border-yellow-500/50 bg-yellow-500/10' : ''}`}
+                      onClick={() => setSelectedGoal(goal.id)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold">{goal.name}</h3>
+                        <Badge variant={isUrgent ? "destructive" : "secondary"}>
+                          {timeLeft.text}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{goal.targetAmount} min / {goal.interval}</span>
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="w-3 h-3" />
+                          {goal.stakeAmount}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          📸 Proof
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Proof Upload */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-2xl">📸</span>
               Upload Your Proof
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Upload Area */}
-            <div className="border-2 border-dashed border-primary/50 rounded-lg p-8 text-center hover:border-primary transition-colors">
-              <input
-                type="file"
-                accept="image/*,video/*"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload"
-              />
-              <label htmlFor="file-upload" className="cursor-pointer">
-                <div className="space-y-3">
-                  <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-                    <Camera className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Drop files here or click to upload</p>
-                    <p className="text-sm text-muted-foreground">
-                      Photos, videos, or screenshots accepted
+            {selectedGoal ? (
+              <>
+                {/* File Upload */}
+                <div className="space-y-2">
+                  <Label>Upload Files</Label>
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                    <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload"
+                      accept="image/*,video/*,.pdf,.doc,.docx"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="cursor-pointer text-primary hover:text-primary/80"
+                    >
+                      Click to upload files
+                    </label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Photos, videos, screenshots, or documents
                     </p>
                   </div>
                 </div>
-              </label>
-            </div>
 
-            {/* Uploaded Files */}
-            {uploadedFiles.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium">Uploaded Files:</h4>
-                <div className="space-y-2">
-                  {uploadedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="text-sm">{file.name}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {(file.size / 1024 / 1024).toFixed(1)}MB
-                        </Badge>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeFile(index)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
+                {/* Uploaded Files */}
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Uploaded Files</Label>
+                    <div className="space-y-2">
+                      {uploadedFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-muted rounded"
+                        >
+                          <span className="text-sm truncate">{file.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                )}
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label>Description (Optional)</Label>
+                  <Textarea
+                    placeholder="Describe what you accomplished..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                  />
                 </div>
+
+                {/* Submit Button */}
+                <Button
+                  onClick={handleSubmit}
+                  className="w-full"
+                  disabled={uploadedFiles.length === 0 || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Submit Proof
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Select a goal to submit proof
               </div>
             )}
-
-            {/* Description */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Additional Notes (Optional)
-              </label>
-              <Textarea
-                placeholder="Tell us about your achievement..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              onClick={handleSubmit}
-              disabled={!selectedGoal || uploadedFiles.length === 0 || isSubmitting}
-              className="w-full text-lg py-6 bg-primary hover:bg-primary/90 disabled:opacity-50"
-              size="lg"
-            >
-              {isSubmitting ? (
-                <>
-                  <Clock className="w-5 h-5 mr-2 animate-spin" />
-                  Submitting Proof...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Submit Proof ✅
-                </>
-              )}
-            </Button>
           </CardContent>
         </Card>
-      )}
-
-      {/* Urgent Warning */}
-      {selectedGoal && (() => {
-        const goal = goals.find(g => g.id === selectedGoal);
-        const timeInfo = goal ? getTimeUntilDeadline(goal.deadline) : null;
-        return timeInfo?.urgent && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
-            <div>
-              <p className="font-medium text-red-400">Urgent: Deadline Approaching!</p>
-              <p className="text-sm text-red-300">
-                Submit proof now or lose ${goal?.stakeAmount}
-              </p>
-            </div>
-          </div>
-        );
-      })()}
+      </div>
     </div>
   );
 };

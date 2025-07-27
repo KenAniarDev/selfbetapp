@@ -7,11 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Lock, DollarSign, Clock, Camera, AlertTriangle } from 'lucide-react';
+import { Lock, DollarSign, Clock, Camera, AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import apiService from '@/utils/api';
 
 const GoalCreation = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     habitName: '',
     targetAmount: '',
@@ -22,39 +26,95 @@ const GoalCreation = () => {
     deadlineTime: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Creating goal:', formData);
     
-    toast({
-      title: "Goal Created! 🔒",
-      description: `You're locked in for $${formData.stakeAmount}. No backing out now.`,
-      duration: 3000,
-    });
+    if (!formData.habitName || !formData.targetAmount || !formData.interval || 
+        !formData.proofType || !formData.stakeAmount || !formData.deadlineTime) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Reset form
-    setFormData({
-      habitName: '',
-      targetAmount: '',
-      interval: '',
-      hardcoreMode: false,
-      proofType: '',
-      stakeAmount: '',
-      deadlineTime: ''
-    });
+    setIsSubmitting(true);
+
+    try {
+      // Ensure time is in military format (HH:mm:ss)
+      const formatMilitaryTime = (time: string): string => {
+        if (!time) return '';
+        // HTML time input provides HH:mm format, convert to HH:mm:ss
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours);
+        const minute = parseInt(minutes);
+        
+        // Ensure proper formatting with leading zeros and add seconds
+        return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+      };
+
+      const goalData = {
+        name: formData.habitName,
+        targetAmount: parseFloat(formData.targetAmount),
+        interval: formData.interval,
+        hardCoreMode: formData.hardcoreMode,
+        proofType: formData.proofType,
+        stakeAmount: parseFloat(formData.stakeAmount),
+        deadlineTime: formatMilitaryTime(formData.deadlineTime)
+      };
+
+      const response = await apiService.createGoal(goalData);
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      toast({
+        title: "Goal Created! 🔒",
+        description: `You're locked in for $${formData.stakeAmount}. No backing out now.`,
+        duration: 3000,
+      });
+
+      // Reset form
+      setFormData({
+        habitName: '',
+        targetAmount: '',
+        interval: '',
+        hardcoreMode: false,
+        proofType: '',
+        stakeAmount: '',
+        deadlineTime: ''
+      });
+
+      // Navigate to dashboard after successful creation
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error creating goal:', error);
+      toast({
+        title: "Error Creating Goal",
+        description: error instanceof Error ? error.message : "Failed to create goal. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const intervals = [
-    { value: 'day', label: 'Daily', emoji: '📅' },
-    { value: 'week', label: 'Weekly', emoji: '📊' },
-    { value: 'month', label: 'Monthly', emoji: '🗓️' }
+    { value: 'daily', label: 'Daily', emoji: '📅' },
+    { value: 'weekly', label: 'Weekly', emoji: '📊' },
+    { value: 'monthly', label: 'Monthly', emoji: '🗓️' }
   ];
 
   const proofTypes = [
     { value: 'photo', label: 'Photo', emoji: '📸' },
     { value: 'screenshot', label: 'Screenshot', emoji: '💻' },
     { value: 'video', label: 'Video', emoji: '🎥' },
-    { value: 'data', label: 'Data Upload', emoji: '📊' }
+    { value: 'text', label: 'Text', emoji: '📝' }
   ];
 
   return (
@@ -89,6 +149,7 @@ const GoalCreation = () => {
                 onChange={(e) => setFormData({...formData, habitName: e.target.value})}
                 className="text-lg"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -103,11 +164,16 @@ const GoalCreation = () => {
                   value={formData.targetAmount}
                   onChange={(e) => setFormData({...formData, targetAmount: e.target.value})}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Interval</Label>
-                <Select value={formData.interval} onValueChange={(value) => setFormData({...formData, interval: value})}>
+                <Select 
+                  value={formData.interval} 
+                  onValueChange={(value) => setFormData({...formData, interval: value})}
+                  disabled={isSubmitting}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Choose frequency" />
                   </SelectTrigger>
@@ -148,13 +214,18 @@ const GoalCreation = () => {
                 id="hardcoreMode"
                 checked={formData.hardcoreMode}
                 onCheckedChange={(checked) => setFormData({...formData, hardcoreMode: checked})}
+                disabled={isSubmitting}
               />
             </div>
 
             {/* Proof Type */}
             <div className="space-y-2">
               <Label>Proof Method</Label>
-              <Select value={formData.proofType} onValueChange={(value) => setFormData({...formData, proofType: value})}>
+              <Select 
+                value={formData.proofType} 
+                onValueChange={(value) => setFormData({...formData, proofType: value})}
+                disabled={isSubmitting}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="How will you prove it?" />
                 </SelectTrigger>
@@ -184,6 +255,7 @@ const GoalCreation = () => {
                   onChange={(e) => setFormData({...formData, stakeAmount: e.target.value})}
                   className="pl-10 text-lg font-semibold"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               <p className="text-sm text-muted-foreground">
@@ -203,6 +275,7 @@ const GoalCreation = () => {
                   onChange={(e) => setFormData({...formData, deadlineTime: e.target.value})}
                   className="pl-10"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -212,13 +285,23 @@ const GoalCreation = () => {
               type="submit"
               className="w-full text-lg py-6 bg-primary hover:bg-primary/90 red-glow"
               size="lg"
+              disabled={isSubmitting}
             >
-              <Lock className="w-5 h-5 mr-2" />
-              Lock In Goal 🔒
-              {formData.stakeAmount && (
-                <Badge variant="secondary" className="ml-2">
-                  ${formData.stakeAmount}
-                </Badge>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Creating Goal...
+                </>
+              ) : (
+                <>
+                  <Lock className="w-5 h-5 mr-2" />
+                  Lock In Goal 🔒
+                  {formData.stakeAmount && (
+                    <Badge variant="secondary" className="ml-2">
+                      ${formData.stakeAmount}
+                    </Badge>
+                  )}
+                </>
               )}
             </Button>
           </form>
