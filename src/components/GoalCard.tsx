@@ -12,6 +12,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { getTimeUntilDeadline, getStatusColor } from '@/utils/habitUtils';
+import { useNavigate } from 'react-router-dom';
 
 interface Goal {
   id: string;
@@ -38,9 +39,14 @@ interface GoalCardProps {
 }
 
 const GoalCard = ({ goal }: GoalCardProps) => {
+  const navigate = useNavigate();
   const timeLeft = getTimeUntilDeadline(goal.nextDeadlineDateTime);
   const isUrgent = timeLeft.includes('h') && !timeLeft.includes('d');
   const isOverdue = timeLeft === 'OVERDUE';
+
+  const handleSubmitProof = () => {
+    navigate(`/proof?goalId=${goal.id}`);
+  };
 
   return (
     <Card 
@@ -99,6 +105,7 @@ const GoalCard = ({ goal }: GoalCardProps) => {
           <Button 
             className="w-full bg-primary hover:bg-primary/90"
             size="sm"
+            onClick={handleSubmitProof}
           >
             <Upload className="w-4 h-4 mr-2" />
             Submit Proof 📸

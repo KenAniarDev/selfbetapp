@@ -12,7 +12,8 @@ import LoginPage from "./components/LoginPage";
 import SignupPage from "./components/SignupPage";
 import SettingsPage from "./components/SettingsPage";
 import GoalCreation from "./components/GoalCreation";
-import HabitDashboard from "./components/HabitDashboard";
+import GoalsPage from "./components/GoalsPage";
+import Dashboard from "./components/Dashboard";
 import ProofSubmission from "./components/ProofSubmission";
 import NotFound from "./pages/NotFound";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
@@ -56,8 +57,9 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route index element={<GoalCreation />} />
-              <Route path="dashboard" element={<HabitDashboard />} />
+              <Route index element={<GoalsPage />} />
+              <Route path="create-goal" element={<GoalCreation />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="proof" element={<ProofSubmission />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="payment" element={<PaymentSetupWrapper />} />
@@ -68,7 +70,7 @@ const App = () => (
               path="/home" 
               element={
                 <ProtectedRoute>
-                  <Navigate to="/dashboard" replace />
+                  <Navigate to="/" replace />
                 </ProtectedRoute>
               } 
             />

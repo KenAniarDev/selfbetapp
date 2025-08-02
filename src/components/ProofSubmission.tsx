@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import apiService from '@/utils/api';
 import { Label } from '@/components/ui/label';
+import { useSearchParams } from 'react-router-dom';
 
 interface Goal {
   id: string;
@@ -43,6 +44,7 @@ interface Goal {
 
 const ProofSubmission = () => {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [description, setDescription] = useState('');
@@ -54,6 +56,17 @@ const ProofSubmission = () => {
     fetchGoals();
   }, []);
 
+  // Auto-select goal from URL parameter
+  useEffect(() => {
+    const goalIdFromUrl = searchParams.get('goalId');
+    if (goalIdFromUrl && goals.length > 0) {
+      const goalExists = goals.find(goal => goal.id === goalIdFromUrl);
+      if (goalExists) {
+        setSelectedGoal(goalIdFromUrl);
+      }
+    }
+  }, [searchParams, goals]);
+
   const fetchGoals = async () => {
     try {
       setLoading(true);
@@ -63,15 +76,18 @@ const ProofSubmission = () => {
         throw new Error(response.error);
       }
 
-      // Handle the specific API response structure
+      // Handle the new API response structure
       let transformedGoals: Goal[] = [];
       
-      if (response.data && response.data.data.data && Array.isArray(response.data.data.data)) {
-        // Goals are nested under response.data.data
+      if (response.data && response.data.data && response.data.data.data && Array.isArray(response.data.data.data)) {
+        // Goals are nested under response.data.data.data
         transformedGoals = response.data.data.data;
-      } else if (Array.isArray(response.data.data)) {
+      } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
         // Fallback: if data is already an array
         transformedGoals = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        // Fallback: if data is already an array
+        transformedGoals = response.data;
       } else {
         // Fallback to empty array
         transformedGoals = [];
@@ -186,6 +202,31 @@ const ProofSubmission = () => {
         </p>
       </div>
 
+      {/* Selected Goal Indicator */}
+      {selectedGoal && (
+        <Card className="glass-card border-primary/50 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-primary rounded-full animate-pulse" />
+                <div>
+                  <h3 className="font-semibold text-primary">
+                    Selected Goal: {goals.find(g => g.id === selectedGoal)?.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {goals.find(g => g.id === selectedGoal)?.displayTarget} • 
+                    Stake: {goals.find(g => g.id === selectedGoal)?.displayStakeAmount}
+                  </p>
+                </div>
+              </div>
+              <Badge variant="secondary" className="bg-primary/20 text-primary">
+                ACTIVE
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Goal Selection */}
         <Card className="glass-card">
@@ -208,19 +249,25 @@ const ProofSubmission = () => {
                 {goals.map((goal) => {
                   const timeLeft = getTimeUntilDeadline(goal.nextDeadlineDateTime);
                   const isUrgent = timeLeft.urgent;
+                  const isSelected = selectedGoal === goal.id;
                   
                   return (
                     <div
                       key={goal.id}
                       className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                        selectedGoal === goal.id
-                          ? 'border-primary bg-primary/10'
+                        isSelected
+                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
                           : 'border-border hover:border-primary/30'
                       } ${isUrgent ? 'border-yellow-500/50 bg-yellow-500/10' : ''}`}
                       onClick={() => setSelectedGoal(goal.id)}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold">{goal.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{goal.name}</h3>
+                          {isSelected && (
+                            <CheckCircle className="w-4 h-4 text-primary" />
+                          )}
+                        </div>
                         <Badge variant={isUrgent ? "destructive" : "secondary"}>
                           {timeLeft.text}
                         </Badge>

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Lock, DollarSign, Clock, Camera, AlertTriangle, Loader2 } from 'lucide-react';
+import { Lock, DollarSign, Clock, Camera, AlertTriangle, Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import apiService from '@/utils/api';
@@ -87,9 +87,9 @@ const GoalCreation = () => {
         deadlineTime: ''
       });
 
-      // Navigate to dashboard after successful creation
+      // Navigate to goals page after successful creation
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/');
       }, 2000);
 
     } catch (error) {
@@ -121,6 +121,16 @@ const GoalCreation = () => {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
+        <div className="flex items-center justify-between mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Goals
+          </Button>
+        </div>
         <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
           Lock In Your Future <Lock className="w-8 h-8 text-primary" />
         </h1>
@@ -249,17 +259,16 @@ const GoalCreation = () => {
                 <Input
                   id="stakeAmount"
                   type="number"
-                  step="0.01"
-                  placeholder="50.00"
+                  placeholder="25"
                   value={formData.stakeAmount}
                   onChange={(e) => setFormData({...formData, stakeAmount: e.target.value})}
-                  className="pl-10 text-lg font-semibold"
+                  className="pl-10"
                   required
                   disabled={isSubmitting}
                 />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Lost per missed {formData.interval || 'interval'}
+              <p className="text-xs text-muted-foreground">
+                How much are you willing to lose if you fail?
               </p>
             </div>
 
@@ -278,40 +287,32 @@ const GoalCreation = () => {
                   disabled={isSubmitting}
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                When do you need to complete this by each day?
+              </p>
             </div>
 
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full text-lg py-6 bg-primary hover:bg-primary/90 red-glow"
-              size="lg"
+              className="w-full"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Creating Goal...
                 </>
               ) : (
                 <>
-                  <Lock className="w-5 h-5 mr-2" />
-                  Lock In Goal 🔒
-                  {formData.stakeAmount && (
-                    <Badge variant="secondary" className="ml-2">
-                      ${formData.stakeAmount}
-                    </Badge>
-                  )}
+                  <Lock className="w-4 h-4 mr-2" />
+                  Lock In My Future
                 </>
               )}
             </Button>
           </form>
         </CardContent>
       </Card>
-
-      {/* Warning */}
-      <div className="text-center text-sm text-muted-foreground bg-muted/20 p-4 rounded-lg">
-        ⚠️ Once locked in, there's no backing out. Your money is at stake.
-      </div>
     </div>
   );
 };

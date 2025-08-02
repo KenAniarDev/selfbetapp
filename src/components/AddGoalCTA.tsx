@@ -2,8 +2,15 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const AddGoalCTA = () => {
+  const navigate = useNavigate();
+
+  const handleCreateGoal = () => {
+    navigate('/create-goal');
+  };
+
   return (
     <Card className="glass-card border-dashed border-primary/50 hover:border-primary transition-colors cursor-pointer">
       <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -14,7 +21,10 @@ const AddGoalCTA = () => {
         <p className="text-sm text-muted-foreground mb-4">
           Lock in another goal and put your money where your mouth is.
         </p>
-        <Button className="bg-primary hover:bg-primary/90">
+        <Button 
+          className="bg-primary hover:bg-primary/90"
+          onClick={handleCreateGoal}
+        >
           Create New Goal 🎯
         </Button>
       </CardContent>

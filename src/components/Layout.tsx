@@ -23,8 +23,8 @@ const Layout = () => {
   const { toast } = useToast();
 
   const navItems = [
-    { path: '/', icon: Target, label: 'Create Goal', emoji: '🎯' },
-    { path: '/dashboard', icon: Trophy, label: 'Dashboard', emoji: '🏆' },
+    { path: '/', icon: Target, label: 'Goals', emoji: '🎯' },
+    { path: '/dashboard', icon: Trophy, label: 'Dashboard', emoji: '📊' },
     { path: '/proof', icon: Upload, label: 'Submit Proof', emoji: '📸' },
   ];
 
