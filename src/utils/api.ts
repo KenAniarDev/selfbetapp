@@ -137,6 +137,37 @@ class ApiService {
       };
     }
   }
+
+  async exportGoalHistory(goalId: string, format: 'csv' = 'csv'): Promise<ApiResponse> {
+    try {
+      const token = await this.getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const url = `${API_BASE_URL}/goals/${goalId}/export?format=${format}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // For CSV export, we want to return the blob data
+      const blob = await response.blob();
+      return { data: blob };
+    } catch (error) {
+      console.error('Goal history export failed:', error);
+      return { 
+        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      };
+    }
+  }
 }
 
 export const apiService = new ApiService();

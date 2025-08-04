@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,8 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, Save, User, Mail, Lock, Bell, Moon, Shield, CreditCard, Plus } from 'lucide-react';
+import DataExport from './DataExport';
+import { apiService } from '@/utils/api';
 
 const SettingsPage = () => {
   const [firstName, setFirstName] = useState('John');
@@ -18,6 +20,9 @@ const SettingsPage = () => {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [emailUpdates, setEmailUpdates] = useState(true);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [loadingGoals, setLoadingGoals] = useState(true);
+  const [goalsError, setGoalsError] = useState<string | null>(null);
 
   const handleSaveProfile = () => {
     // TODO: Implement profile update
@@ -38,6 +43,30 @@ const SettingsPage = () => {
     // Navigate to payment setup
     window.location.href = '/payment';
   };
+
+  // Fetch goals for export functionality
+  useEffect(() => {
+    const fetchGoals = async () => {
+      try {
+        setGoalsError(null);
+        const response = await apiService.getGoals();
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          setGoals(response.data.data);
+        } else {
+          console.warn('Goals response is not in expected format:', response.data);
+          setGoals([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch goals:', error);
+        setGoalsError('Failed to load goals');
+        setGoals([]);
+      } finally {
+        setLoadingGoals(false);
+      }
+    };
+
+    fetchGoals();
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -286,6 +315,20 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
+        {/* Data Export Section */}
+        <DataExport goals={goals} loading={loadingGoals} />
+        
+        {/* Show error if goals failed to load */}
+        {goalsError && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center text-sm text-muted-foreground">
+                {goalsError}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Account Actions */}
         <Card>
           <CardHeader>
@@ -298,9 +341,6 @@ const SettingsPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full justify-start">
-              Export My Data
-            </Button>
             <Button variant="outline" className="w-full justify-start text-destructive">
               Delete Account
             </Button>
