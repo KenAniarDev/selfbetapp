@@ -168,6 +168,42 @@ class ApiService {
       };
     }
   }
+
+  // User registration (no authentication required)
+  async registerUser(userData: {
+    email: string;
+    password: string;
+    displayName: string;
+  }): Promise<ApiResponse> {
+    try {
+      const url = `${API_BASE_URL}/users/register`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': '*/*',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Return the error response for proper handling in the component
+        return { 
+          error: data.message || `HTTP ${response.status}: ${response.statusText}`,
+          data: data 
+        };
+      }
+
+      return { data };
+    } catch (error) {
+      console.error('User registration failed:', error);
+      return { 
+        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      };
+    }
+  }
 }
 
 export const apiService = new ApiService();
