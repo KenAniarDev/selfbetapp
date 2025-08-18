@@ -57,6 +57,8 @@ const SignupPage = () => {
 
     try {
       const result = await apiService.registerUser({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         email: email.trim(),
         password: password,
         displayName: `${firstName.trim()} ${lastName.trim()}`

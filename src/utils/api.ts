@@ -173,17 +173,31 @@ class ApiService {
   async registerUser(userData: {
     email: string;
     password: string;
-    displayName: string;
+    firstName: string;
+    lastName: string;
+    displayName?: string; // Make displayName optional
   }): Promise<ApiResponse> {
     try {
       const url = `${API_BASE_URL}/users/register`;
+      console.log("firstName:", userData.firstName);
+      console.log("lastName:", userData.lastName);
+      console.log("displayName:", userData.displayName);
+      // Transform the payload to match the API's expected format
+      const apiPayload = {
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        displayName: userData.displayName || `${userData.firstName} ${userData.lastName}`,
+      };
+      console.log('Registering user with payload:', apiPayload);
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'accept': '*/*',
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(apiPayload),
       });
 
       const data = await response.json();
