@@ -2,6 +2,7 @@ import { auth } from "@/firebase/config";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL + '/api' || "https://localhost:7192/api";
 
+
 interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
