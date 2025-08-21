@@ -1,8 +1,8 @@
-import { auth } from '@/firebase/config';
+import { auth } from "@/firebase/config";
 
-const API_BASE_URL = 'http://localhost:5033/api';
+const API_BASE_URL = "https://localhost:7192/api";
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
@@ -13,11 +13,11 @@ class ApiService {
     try {
       const user = auth.currentUser;
       if (!user) {
-        throw new Error('No authenticated user');
+        throw new Error("No authenticated user");
       }
       return await user.getIdToken();
     } catch (error) {
-      console.error('Error getting auth token:', error);
+      console.error("Error getting auth token:", error);
       return null;
     }
   }
@@ -29,14 +29,14 @@ class ApiService {
     try {
       const token = await this.getAuthToken();
       if (!token) {
-        throw new Error('Authentication required');
+        throw new Error("Authentication required");
       }
 
       const url = `${API_BASE_URL}${endpoint}`;
       const config: RequestInit = {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
           ...options.headers,
         },
         ...options,
@@ -46,14 +46,17 @@ class ApiService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(
+          data.message || `HTTP ${response.status}: ${response.statusText}`
+        );
       }
 
       return { data };
     } catch (error) {
-      console.error('API request failed:', error);
-      return { 
-        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      console.error("API request failed:", error);
+      return {
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
   }
@@ -67,57 +70,64 @@ class ApiService {
     stakeAmount: number;
     deadlineTime: string;
   }): Promise<ApiResponse> {
-    return this.makeRequest('/goals', {
-      method: 'POST',
+    return this.makeRequest("/goals", {
+      method: "POST",
       body: JSON.stringify(goalData),
     });
   }
 
   async getGoals(): Promise<ApiResponse> {
-    return this.makeRequest('/goals');
+    return this.makeRequest("/goals");
   }
 
   async getGoal(id: string): Promise<ApiResponse> {
     return this.makeRequest(`/goals/${id}`);
   }
 
-  async updateGoal(id: string, goalData: any): Promise<ApiResponse> {
+  async updateGoal(
+    id: string,
+    goalData: Record<string, unknown>
+  ): Promise<ApiResponse> {
     return this.makeRequest(`/goals/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(goalData),
     });
   }
 
   async deleteGoal(id: string): Promise<ApiResponse> {
     return this.makeRequest(`/goals/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
-  async submitProof(goalId: string, files: File[], description?: string): Promise<ApiResponse> {
+  async submitProof(
+    goalId: string,
+    files: File[],
+    description?: string
+  ): Promise<ApiResponse> {
     try {
       const token = await this.getAuthToken();
       if (!token) {
-        throw new Error('Authentication required');
+        throw new Error("Authentication required");
       }
 
       const formData = new FormData();
-      
+
       // Add all files to FormData
       files.forEach((file, index) => {
-        formData.append('ProofFile', file);
+        formData.append("ProofFile", file);
       });
 
       // Add description if provided
       if (description) {
-        formData.append('description', description);
+        formData.append("description", description);
       }
 
       const url = `${API_BASE_URL}/goals/${goalId}/proof`;
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           // Don't set Content-Type for FormData, let browser set it with boundary
         },
         body: formData,
@@ -126,47 +136,72 @@ class ApiService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(
+          data.message || `HTTP ${response.status}: ${response.statusText}`
+        );
       }
 
       return { data };
     } catch (error) {
-      console.error('Proof submission failed:', error);
-      return { 
-        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      console.error("Proof submission failed:", error);
+      return {
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
   }
 
-  async exportGoalHistory(goalId: string, format: 'csv' = 'csv'): Promise<ApiResponse> {
+  async exportGoalHistory(
+    goalId: string,
+    format: "csv" = "csv"
+  ): Promise<ApiResponse> {
     try {
       const token = await this.getAuthToken();
       if (!token) {
-        throw new Error('Authentication required');
+        throw new Error("Authentication required");
       }
 
       const url = `${API_BASE_URL}/goals/${goalId}/export?format=${format}`;
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(
+          errorData.message || `HTTP ${response.status}: ${response.statusText}`
+        );
       }
 
       // For CSV export, we want to return the blob data
       const blob = await response.blob();
       return { data: blob };
     } catch (error) {
-      console.error('Goal history export failed:', error);
-      return { 
-        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      console.error("Goal history export failed:", error);
+      return {
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
+  }
+
+  // Payment method management
+  async savePaymentMethod(paymentMethodData: {
+    paymentMethodId: string;
+  }): Promise<ApiResponse> {
+    return this.makeRequest("/users/payment/save-payment-method", {
+      method: "POST",
+      body: JSON.stringify(paymentMethodData),
+    });
+  }
+
+  async verifyCard() {
+    return this.makeRequest("/users/payment/verify-card", {
+      method: "POST",
+    });
   }
 
   // User registration (no authentication required)
@@ -175,27 +210,24 @@ class ApiService {
     password: string;
     firstName: string;
     lastName: string;
-    displayName?: string; // Make displayName optional
   }): Promise<ApiResponse> {
     try {
       const url = `${API_BASE_URL}/users/register`;
       console.log("firstName:", userData.firstName);
       console.log("lastName:", userData.lastName);
-      console.log("displayName:", userData.displayName);
       // Transform the payload to match the API's expected format
       const apiPayload = {
         email: userData.email,
         password: userData.password,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        displayName: userData.displayName || `${userData.firstName} ${userData.lastName}`,
       };
-      console.log('Registering user with payload:', apiPayload);
+      console.log("Registering user with payload:", apiPayload);
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'accept': '*/*',
+          "Content-Type": "application/json",
+          accept: "*/*",
         },
         body: JSON.stringify(apiPayload),
       });
@@ -204,21 +236,23 @@ class ApiService {
 
       if (!response.ok) {
         // Return the error response for proper handling in the component
-        return { 
-          error: data.message || `HTTP ${response.status}: ${response.statusText}`,
-          data: data 
+        return {
+          error:
+            data.message || `HTTP ${response.status}: ${response.statusText}`,
+          data: data,
         };
       }
 
       return { data };
     } catch (error) {
-      console.error('User registration failed:', error);
-      return { 
-        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      console.error("User registration failed:", error);
+      return {
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
   }
 }
 
 export const apiService = new ApiService();
-export default apiService; 
+export default apiService;

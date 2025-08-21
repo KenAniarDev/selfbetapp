@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,26 +30,36 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Public routes - redirect authenticated users */}
-            <Route 
-              path="/login" 
+            <Route
+              path="/login"
               element={
                 <PublicRoute>
                   <LoginPage />
                 </PublicRoute>
-              } 
+              }
             />
-            <Route 
-              path="/signup" 
+            <Route
+              path="/signup"
               element={
                 <PublicRoute>
                   <SignupPage />
                 </PublicRoute>
-              } 
+              }
             />
-            
+
+            {/* Payment setup route - standalone page after signup */}
+            <Route
+              path="/payment"
+              element={
+                <ProtectedRoute>
+                  <PaymentSetupWrapper />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Protected routes - redirect unauthenticated users */}
-            <Route 
-              path="/" 
+            <Route
+              path="/"
               element={
                 <ProtectedRoute>
                   <Layout />
@@ -62,19 +71,18 @@ const App = () => (
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="proof" element={<ProofSubmission />} />
               <Route path="settings" element={<SettingsPage />} />
-              <Route path="payment" element={<PaymentSetupWrapper />} />
             </Route>
-            
+
             {/* Fallback route for root to prevent conflicts */}
-            <Route 
-              path="/home" 
+            <Route
+              path="/home"
               element={
                 <ProtectedRoute>
                   <Navigate to="/" replace />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
+
             {/* 404 page */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,27 +1,43 @@
-import { useState, useEffect } from 'react';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { CreditCard, Shield, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  CreditCard,
+  Shield,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { apiService } from "@/utils/api";
+import { stripeConfig } from "@/config/stripe";
 
 // Stripe configuration
 
 const cardElementOptions = {
   style: {
     base: {
-      fontSize: '16px',
-      color: '#424770',
-      '::placeholder': {
-        color: '#aab7c4',
+      fontSize: "16px",
+      color: "#424770",
+      "::placeholder": {
+        color: "#aab7c4",
       },
     },
     invalid: {
-      color: '#9e2146',
+      color: "#9e2146",
     },
   },
 };
@@ -34,10 +50,11 @@ interface PaymentSetupProps {
 function PaymentForm({ onSuccess, onCancel }: PaymentSetupProps) {
   const stripe = useStripe();
   const elements = useElements();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<any>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -52,39 +69,75 @@ function PaymentForm({ onSuccess, onCancel }: PaymentSetupProps) {
     try {
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
-        throw new Error('Card element not found');
+        throw new Error("Card element not found");
       }
 
-      const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
-      });
+      // Create payment method with Stripe
+      const { error: stripeError, paymentMethod } =
+        await stripe.createPaymentMethod({
+          type: "card",
+          card: cardElement,
+        });
 
       if (stripeError) {
-        setError(stripeError.message || 'Payment method creation failed');
+        setError(stripeError.message || "Payment method creation failed");
         return;
       }
 
-      setPaymentMethod(paymentMethod);
-      setSuccess(true);
-      
-      // Here you would typically send the payment method ID to your backend
-      console.log('Payment method created:', paymentMethod.id);
-      
-      // Simulate backend call
-      setTimeout(() => {
-        onSuccess?.();
-      }, 2000);
+      try {
+        // Call your backend to save the payment method ID
+        const result = await apiService.savePaymentMethod({
+          paymentMethodId: paymentMethod.id,
+        });
 
+        console.log("result:", result);
+
+        if (result.error) {
+          console.error("Save payment method error:", result.error);
+          setError(result.error);
+          return;
+        }
+
+        const verifyResult = await apiService.verifyCard();
+
+        if (verifyResult.error) {
+          console.error("Verify card error:", verifyResult.error);
+          setError(verifyResult.error);
+          return;
+        }
+
+        console.log("verifyResult:", verifyResult);
+
+        console.log("Payment method saved to backend:", result.data);
+
+        setSuccess(true);
+
+        toast({
+          title: "Payment Method Added!",
+          description: "Your payment method has been securely saved.",
+        });
+
+        // Navigate to dashboard after successful setup
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000);
+      } catch (backendError) {
+        console.error("Backend error:", backendError);
+
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000);
+      }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      console.error("Payment setup error:", err);
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    onCancel?.();
+    navigate("/dashboard");
   };
 
   if (success) {
@@ -93,12 +146,17 @@ function PaymentForm({ onSuccess, onCancel }: PaymentSetupProps) {
         <CardContent className="pt-6">
           <div className="text-center">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Payment Method Added!</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Payment Method Added!
+            </h3>
             <p className="text-gray-600 mb-4">
               Your payment method has been securely saved and is ready to use.
             </p>
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800"
+              >
                 <Shield className="h-3 w-3 mr-1" />
                 Secure
               </Badge>
@@ -107,8 +165,8 @@ function PaymentForm({ onSuccess, onCancel }: PaymentSetupProps) {
                 Ready
               </Badge>
             </div>
-            <Button onClick={onSuccess} className="w-full">
-              Continue
+            <Button onClick={() => navigate("/dashboard")} className="w-full">
+              Continue to Dashboard
             </Button>
           </div>
         </CardContent>
@@ -133,10 +191,7 @@ function PaymentForm({ onSuccess, onCancel }: PaymentSetupProps) {
             <div>
               <Label htmlFor="card-element">Card Information</Label>
               <div className="mt-2 p-3 border rounded-md bg-white">
-                <CardElement
-                  id="card-element"
-                  options={cardElementOptions}
-                />
+                <CardElement id="card-element" options={cardElementOptions} />
               </div>
             </div>
 
@@ -154,9 +209,9 @@ function PaymentForm({ onSuccess, onCancel }: PaymentSetupProps) {
           )}
 
           <div className="space-y-3">
-            <Button 
-              type="submit" 
-              disabled={!stripe || loading} 
+            <Button
+              type="submit"
+              disabled={!stripe || loading}
               className="w-full"
             >
               {loading ? (
@@ -165,18 +220,18 @@ function PaymentForm({ onSuccess, onCancel }: PaymentSetupProps) {
                   Processing...
                 </>
               ) : (
-                'Add Payment Method'
+                "Add Payment Method"
               )}
             </Button>
-            
-            <Button 
-              type="button" 
-              variant="outline" 
+
+            {/* <Button
+              type="button"
+              variant="outline"
               onClick={handleCancel}
               className="w-full"
             >
-              Cancel
-            </Button>
+              Skip for now
+            </Button> */}
           </div>
         </form>
       </CardContent>
@@ -184,23 +239,10 @@ function PaymentForm({ onSuccess, onCancel }: PaymentSetupProps) {
   );
 }
 
-export default function PaymentSetup({ onSuccess, onCancel }: PaymentSetupProps) {
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-
-  useEffect(() => {
-    // In a real app, you would get the client secret from your backend
-    // For now, we'll simulate this
-    setClientSecret('dummy_client_secret');
-  }, []);
-
-  if (!clientSecret) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
+export default function PaymentSetup({
+  onSuccess,
+  onCancel,
+}: PaymentSetupProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
@@ -217,4 +259,4 @@ export default function PaymentSetup({ onSuccess, onCancel }: PaymentSetupProps)
       </div>
     </div>
   );
-} 
+}

@@ -1,54 +1,60 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { auth } from '@/firebase/config';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  GoogleAuthProvider, 
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { auth } from "@/firebase/config";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   signInWithPopup,
-  UserCredential 
-} from 'firebase/auth';
-import { useToast } from '@/hooks/use-toast';
+  UserCredential,
+} from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPasswordStep, setShowPasswordStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
   // Get the intended destination from location state, or default to '/dashboard'
-  const from = (location.state as any)?.from?.pathname || '/dashboard';
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    setError('');
-    
+    setError("");
+
     try {
       const provider = new GoogleAuthProvider();
       const result: UserCredential = await signInWithPopup(auth, provider);
-      
+      console.log("result:", result);
       toast({
         title: "Success!",
         description: "Successfully signed in with Google.",
       });
-      
+
       // Navigate to the intended destination or home page
       navigate(from, { replace: true });
     } catch (error: any) {
-      console.error('Google sign-in error:', error);
-      setError(error.message || 'Failed to sign in with Google');
+      console.error("Google sign-in error:", error);
+      setError(error.message || "Failed to sign in with Google");
       toast({
         title: "Error",
-        description: error.message || 'Failed to sign in with Google',
+        description: error.message || "Failed to sign in with Google",
         variant: "destructive",
       });
     } finally {
@@ -58,22 +64,22 @@ const LoginPage = () => {
 
   const handleEmailSignup = () => {
     setShowPasswordStep(true);
-    setError('');
+    setError("");
   };
 
   const handleConfirmSignup = async () => {
     if (!email.trim() || !password.trim()) {
-      setError('Please fill in all fields');
+      setError("Please fill in all fields");
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       // Try to sign in first, if that fails, create a new account
       let result: UserCredential;
-      
+
       try {
         // Try to sign in with existing account
         result = await signInWithEmailAndPassword(auth, email, password);
@@ -83,11 +89,12 @@ const LoginPage = () => {
         });
       } catch (signInError: any) {
         // If sign in fails, try to create a new account
-        if (signInError.code === 'auth/user-not-found') {
+        if (signInError.code === "auth/user-not-found") {
           result = await createUserWithEmailAndPassword(auth, email, password);
           toast({
             title: "Account Created!",
-            description: "Your account has been created and you're now signed in.",
+            description:
+              "Your account has been created and you're now signed in.",
           });
         } else {
           throw signInError;
@@ -97,29 +104,29 @@ const LoginPage = () => {
       // Navigate to the intended destination or home page
       navigate(from, { replace: true });
     } catch (error: any) {
-      console.error('Authentication error:', error);
-      let errorMessage = 'Authentication failed';
-      
+      console.error("Authentication error:", error);
+      let errorMessage = "Authentication failed";
+
       switch (error.code) {
-        case 'auth/invalid-email':
-          errorMessage = 'Invalid email address';
+        case "auth/invalid-email":
+          errorMessage = "Invalid email address";
           break;
-        case 'auth/weak-password':
-          errorMessage = 'Password should be at least 6 characters';
+        case "auth/weak-password":
+          errorMessage = "Password should be at least 6 characters";
           break;
-        case 'auth/email-already-in-use':
-          errorMessage = 'An account with this email already exists';
+        case "auth/email-already-in-use":
+          errorMessage = "An account with this email already exists";
           break;
-        case 'auth/wrong-password':
-          errorMessage = 'Incorrect password';
+        case "auth/wrong-password":
+          errorMessage = "Incorrect password";
           break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Too many failed attempts. Please try again later';
+        case "auth/too-many-requests":
+          errorMessage = "Too many failed attempts. Please try again later";
           break;
         default:
-          errorMessage = error.message || 'Authentication failed';
+          errorMessage = error.message || "Authentication failed";
       }
-      
+
       setError(errorMessage);
       toast({
         title: "Error",
@@ -140,7 +147,9 @@ const LoginPage = () => {
               <span className="text-white font-bold text-2xl">S</span>
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold">Welcome to Self-Bet</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                Welcome to Self-Bet
+              </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
                 Lock in your goals and stay accountable
               </CardDescription>
@@ -155,7 +164,7 @@ const LoginPage = () => {
 
             {!showPasswordStep && (
               <>
-                <Button 
+                <Button
                   onClick={handleGoogleSignIn}
                   className="w-full h-12 text-base font-medium"
                   variant="outline"
@@ -190,7 +199,7 @@ const LoginPage = () => {
                     </>
                   )}
                 </Button>
-                
+
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <Separator className="w-full" />
@@ -214,7 +223,7 @@ const LoginPage = () => {
                       disabled={isLoading}
                     />
                   </div>
-                  <Button 
+                  <Button
                     onClick={handleEmailSignup}
                     className="w-full h-12 text-base font-medium"
                     disabled={!email.trim() || isLoading}
@@ -249,7 +258,7 @@ const LoginPage = () => {
                     disabled={isLoading}
                   />
                 </div>
-                <Button 
+                <Button
                   onClick={handleConfirmSignup}
                   className="w-full h-12 text-base font-medium"
                   disabled={!password.trim() || isLoading}
@@ -260,10 +269,10 @@ const LoginPage = () => {
                       Signing in...
                     </div>
                   ) : (
-                    'Sign In'
+                    "Sign In"
                   )}
                 </Button>
-                <Button 
+                <Button
                   onClick={() => setShowPasswordStep(false)}
                   variant="ghost"
                   className="w-full"
@@ -275,19 +284,22 @@ const LoginPage = () => {
             )}
 
             <div className="text-center text-sm text-muted-foreground">
-              By signing in, you agree to our{' '}
+              By signing in, you agree to our{" "}
               <a href="#" className="text-primary hover:underline">
                 Terms of Service
-              </a>{' '}
-              and{' '}
+              </a>{" "}
+              and{" "}
               <a href="#" className="text-primary hover:underline">
                 Privacy Policy
               </a>
             </div>
 
             <div className="text-center text-sm">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-primary hover:underline font-medium">
+              Don't have an account?{" "}
+              <Link
+                to="/signup"
+                className="text-primary hover:underline font-medium"
+              >
                 Sign up
               </Link>
             </div>
@@ -298,4 +310,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

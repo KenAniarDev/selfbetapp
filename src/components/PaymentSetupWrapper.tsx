@@ -1,19 +1,23 @@
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import PaymentSetup from './PaymentSetup';
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import PaymentSetup from "./PaymentSetup";
+import { stripeConfig } from "@/config/stripe";
 
-// Initialize Stripe (replace with your publishable key)
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_...');
+// Initialize Stripe with configuration
+const stripePromise = loadStripe(stripeConfig.publishableKey);
 
 interface PaymentSetupWrapperProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export default function PaymentSetupWrapper({ onSuccess, onCancel }: PaymentSetupWrapperProps) {
+export default function PaymentSetupWrapper({
+  onSuccess,
+  onCancel,
+}: PaymentSetupWrapperProps) {
   return (
     <Elements stripe={stripePromise}>
       <PaymentSetup onSuccess={onSuccess} onCancel={onCancel} />
     </Elements>
   );
-} 
+}

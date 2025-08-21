@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import DashboardHeader from './DashboardHeader';
-import GoalCard from './GoalCard';
-import AddGoalCTA from './AddGoalCTA';
-import { useToast } from '@/hooks/use-toast';
-import apiService from '@/utils/api';
-import { Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import DashboardHeader from "./DashboardHeader";
+import GoalCard from "./GoalCard";
+import AddGoalCTA from "./AddGoalCTA";
+import { useToast } from "@/hooks/use-toast";
+import apiService from "@/utils/api";
+import { Loader2 } from "lucide-react";
 
 interface Goal {
   id: string;
@@ -40,20 +40,29 @@ const GoalsPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await apiService.getGoals();
-      
+      console.log("response:", response);
       if (response.error) {
         throw new Error(response.error);
       }
 
       // Handle the new API response structure
       let transformedGoals: Goal[] = [];
-      
-      if (response.data && response.data.data && response.data.data.data && Array.isArray(response.data.data.data)) {
+
+      if (
+        response.data &&
+        response.data.data &&
+        response.data.data.items &&
+        Array.isArray(response.data.data.items)
+      ) {
         // Goals are nested under response.data.data.data
-        transformedGoals = response.data.data.data;
-      } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        transformedGoals = response.data.data.items;
+      } else if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.items)
+      ) {
         // Fallback: if data is already an array
         transformedGoals = response.data.data;
       } else if (Array.isArray(response.data)) {
@@ -66,8 +75,10 @@ const GoalsPage = () => {
 
       setGoals(transformedGoals);
     } catch (error) {
-      console.error('Error fetching goals:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch goals');
+      console.error("Error fetching goals:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch goals"
+      );
       toast({
         title: "Error",
         description: "Failed to load your goals. Please try again.",
@@ -78,8 +89,12 @@ const GoalsPage = () => {
     }
   };
 
-  const totalAtStake = Array.isArray(goals) ? goals.reduce((sum, goal) => sum + goal.stakeAmount, 0) : 0;
-  const activeGoals = Array.isArray(goals) ? goals.filter(goal => goal.isActive).length : 0;
+  const totalAtStake = Array.isArray(goals)
+    ? goals.reduce((sum, goal) => sum + goal.stakeAmount, 0)
+    : 0;
+  const activeGoals = Array.isArray(goals)
+    ? goals.filter((goal) => goal.isActive).length
+    : 0;
 
   if (loading) {
     return (
@@ -98,7 +113,7 @@ const GoalsPage = () => {
         <DashboardHeader activeGoals={0} totalAtStake={0} />
         <div className="text-center py-8">
           <p className="text-muted-foreground mb-4">{error}</p>
-          <button 
+          <button
             onClick={fetchGoals}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >
@@ -136,4 +151,4 @@ const GoalsPage = () => {
   );
 };
 
-export default GoalsPage; 
+export default GoalsPage;
